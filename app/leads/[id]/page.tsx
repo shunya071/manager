@@ -4,7 +4,14 @@ import { getDatabaseRecord } from "@/lib/notion";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeadDetailPage({ params }: { params: { id: string } }) {
+type PageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export default async function LeadDetailPage({ params }: PageProps) {
+  const { id } = await params;
   if (!env.dbLeads) {
     return (
       <div className="card">
@@ -14,7 +21,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     );
   }
 
-  const lead = await getDatabaseRecord(env.dbLeads, params.id);
+  const lead = await getDatabaseRecord(env.dbLeads, id);
   if (!lead) {
     return (
       <div className="card">
@@ -27,7 +34,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     <div className="grid">
       <RecordEditor
         databaseId={env.dbLeads}
-        pageId={params.id}
+        pageId={id}
         title={lead.title}
         fields={lead.fields}
         listRedirectBasePath="/leads"

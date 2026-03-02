@@ -4,7 +4,14 @@ import { getDatabaseRecord } from "@/lib/notion";
 
 export const dynamic = "force-dynamic";
 
-export default async function TaskDetailPage({ params }: { params: { id: string } }) {
+type PageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export default async function TaskDetailPage({ params }: PageProps) {
+  const { id } = await params;
   if (!env.dbTasks) {
     return (
       <div className="card">
@@ -14,7 +21,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
     );
   }
 
-  const record = await getDatabaseRecord(env.dbTasks, params.id);
+  const record = await getDatabaseRecord(env.dbTasks, id);
   if (!record) {
     return (
       <div className="card">
@@ -27,7 +34,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
     <div className="grid">
       <RecordEditor
         databaseId={env.dbTasks}
-        pageId={params.id}
+        pageId={id}
         title={record.title}
         fields={record.fields}
         listRedirectBasePath="/tasks"

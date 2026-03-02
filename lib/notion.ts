@@ -640,7 +640,7 @@ const extractSelectOptions = (prop: any): string[] => {
 
 const extractPageTitle = (page: any): string => {
   if (!page?.properties) return "";
-  const titleProp = Object.values(page.properties).find((prop: any) => prop?.type === "title");
+  const titleProp = (Object.values(page.properties) as any[]).find((prop: any) => prop?.type === "title");
   return titleProp ? getPlainText(titleProp.title) : "";
 };
 
