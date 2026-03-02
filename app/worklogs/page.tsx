@@ -1,6 +1,8 @@
-import DatabaseTable from "@/components/DatabaseTable";
+import CompactList from "@/components/CompactList";
 import { env } from "@/lib/env";
 import { getDatabaseTable } from "@/lib/notion";
+
+export const dynamic = "force-dynamic";
 
 export default async function WorkLogsPage() {
   if (!env.dbWorkLogs) {
@@ -23,7 +25,12 @@ export default async function WorkLogsPage() {
           {table.title && <div className="muted">{table.title}</div>}
         </div>
       </div>
-      <DatabaseTable table={table} databaseId={env.dbWorkLogs} />
+      <CompactList
+        table={table}
+        titleLinkBasePath="/worklogs"
+        rowEditHrefBasePath="/worklogs"
+        createHref="/worklogs/new"
+      />
     </div>
   );
 }

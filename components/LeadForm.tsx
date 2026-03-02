@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LEAD_CHANNEL_OPTIONS,
   LEAD_PRIORITY_OPTIONS,
   LEAD_STATUS_OPTIONS
 } from "@/lib/constants";
+import { useNotionOptions } from "@/lib/useNotionOptions";
+import { startLoading, stopLoading } from "@/lib/loading";
+import { toastError, toastSuccess } from "@/lib/toast";
 
 export default function LeadForm() {
   const [form, setForm] = useState({
@@ -16,8 +19,18 @@ export default function LeadForm() {
     nextAction: "",
     nextActionDate: ""
   });
+  const options = useNotionOptions();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      status: options.leads.status.includes(prev.status) ? prev.status : (options.leads.status[0] ?? ""),
+      priority: options.leads.priority.includes(prev.priority) ? prev.priority : (options.leads.priority[0] ?? ""),
+      channel: options.leads.channel.includes(prev.channel) ? prev.channel : (options.leads.channel[0] ?? "")
+    }));
+  }, [options]);
 
   const onChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -28,28 +41,39 @@ export default function LeadForm() {
     setError(null);
     if (!form.name.trim()) {
       setError("Name is required");
+      toastError("Name is required");
       return;
     }
     setSaving(true);
-    const response = await fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        name: form.name.trim(),
-        nextAction: form.nextAction.trim() || null,
-        nextActionDate: form.nextActionDate || null
-      })
-    });
+    startLoading();
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          name: form.name.trim(),
+          nextAction: form.nextAction.trim() || null,
+          nextActionDate: form.nextActionDate || null
+        })
+      });
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Failed");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error ?? "Failed");
+        toastError(data.error ?? "作成に失敗しました。");
+        setSaving(false);
+        return;
+      }
+
+      toastSuccess("作成しました。");
+      window.location.href = "/leads";
+    } catch {
+      setError("Failed");
+    } finally {
       setSaving(false);
-      return;
+      stopLoading();
     }
-
-    window.location.href = "/leads";
   };
 
   return (
@@ -61,7 +85,7 @@ export default function LeadForm() {
       <div>
         <div className="label">Status</div>
         <select className="input" value={form.status} onChange={(e) => onChange("status", e.target.value)}>
-          {LEAD_STATUS_OPTIONS.map((status) => (
+          {(options.leads.status.length > 0 ? options.leads.status : LEAD_STATUS_OPTIONS).map((status) => (
             <option key={status} value={status}>
               {status}
             </option>
@@ -71,7 +95,7 @@ export default function LeadForm() {
       <div>
         <div className="label">Priority</div>
         <select className="input" value={form.priority} onChange={(e) => onChange("priority", e.target.value)}>
-          {LEAD_PRIORITY_OPTIONS.map((priority) => (
+          {(options.leads.priority.length > 0 ? options.leads.priority : LEAD_PRIORITY_OPTIONS).map((priority) => (
             <option key={priority} value={priority}>
               {priority}
             </option>
@@ -81,7 +105,7 @@ export default function LeadForm() {
       <div>
         <div className="label">Channel</div>
         <select className="input" value={form.channel} onChange={(e) => onChange("channel", e.target.value)}>
-          {LEAD_CHANNEL_OPTIONS.map((channel) => (
+          {(options.leads.channel.length > 0 ? options.leads.channel : LEAD_CHANNEL_OPTIONS).map((channel) => (
             <option key={channel} value={channel}>
               {channel}
             </option>

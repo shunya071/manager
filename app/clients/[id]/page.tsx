@@ -1,8 +1,21 @@
 import ClientTasksBoard from "@/components/ClientTasksBoard";
-import { getClientById, getClientTasks } from "@/lib/notion";
+import RecordEditor from "@/components/RecordEditor";
+import { env } from "@/lib/env";
+import { getClientTasks, getDatabaseRecord } from "@/lib/notion";
+
+export const dynamic = "force-dynamic";
 
 export default async function ClientDetailPage({ params }: { params: { id: string } }) {
-  const client = await getClientById(params.id);
+  if (!env.dbClients) {
+    return (
+      <div className="card">
+        <h2>Clients</h2>
+        <p className="muted">NOTION_DATABASE_ID_CLIENTS が未設定です。</p>
+      </div>
+    );
+  }
+
+  const client = await getDatabaseRecord(env.dbClients, params.id);
   const tasks = await getClientTasks(params.id);
 
   if (!client) {
@@ -15,12 +28,14 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
 
   return (
     <div className="grid">
-      <div className="card">
-        <h1>{client.name}</h1>
-        <p>Status: {client.status ?? "-"}</p>
-        <p>Default Rate: {client.defaultRate ?? "-"}</p>
-      </div>
-      <ClientTasksBoard clientId={client.id} initialTasks={tasks} />
+      <RecordEditor
+        databaseId={env.dbClients}
+        pageId={params.id}
+        title={client.title}
+        fields={client.fields}
+        listRedirectBasePath="/clients"
+      />
+      <ClientTasksBoard clientId={params.id} initialTasks={tasks} />
     </div>
   );
 }

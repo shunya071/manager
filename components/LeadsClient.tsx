@@ -3,20 +3,32 @@
 import { useState } from "react";
 import { LEAD_PRIORITY_OPTIONS, LEAD_STATUS_OPTIONS } from "@/lib/constants";
 import type { Lead } from "@/lib/notion";
+import { useNotionOptions } from "@/lib/useNotionOptions";
+import { startLoading, stopLoading } from "@/lib/loading";
+import { toastError } from "@/lib/toast";
 
 export default function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) {
   const [leads, setLeads] = useState(initialLeads);
   const [saving, setSaving] = useState<string | null>(null);
+  const options = useNotionOptions();
 
   const updateLead = async (id: string, patch: Partial<Pick<Lead, "status" | "priority">>) => {
     setSaving(id);
     setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead)));
-    await fetch(`/api/leads/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch)
-    });
-    setSaving(null);
+    startLoading();
+    try {
+      const response = await fetch(`/api/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch)
+      });
+      if (!response.ok) {
+        toastError("更新に失敗しました。");
+      }
+    } finally {
+      stopLoading();
+      setSaving(null);
+    }
   };
 
   return (
@@ -42,7 +54,7 @@ export default function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) 
                   disabled={saving === lead.id}
                 >
                   <option value="">-</option>
-                  {LEAD_STATUS_OPTIONS.map((status) => (
+                  {(options.leads.status.length > 0 ? options.leads.status : LEAD_STATUS_OPTIONS).map((status) => (
                     <option key={status} value={status}>
                       {status}
                     </option>
@@ -57,7 +69,7 @@ export default function LeadsClient({ initialLeads }: { initialLeads: Lead[] }) 
                   disabled={saving === lead.id}
                 >
                   <option value="">-</option>
-                  {LEAD_PRIORITY_OPTIONS.map((priority) => (
+                  {(options.leads.priority.length > 0 ? options.leads.priority : LEAD_PRIORITY_OPTIONS).map((priority) => (
                     <option key={priority} value={priority}>
                       {priority}
                     </option>

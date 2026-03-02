@@ -1,6 +1,8 @@
-import DatabaseTable from "@/components/DatabaseTable";
+import CompactList from "@/components/CompactList";
 import { env } from "@/lib/env";
 import { getDatabaseTable } from "@/lib/notion";
+
+export const dynamic = "force-dynamic";
 
 export default async function LeadsPage() {
   const table = await getDatabaseTable(env.dbLeads);
@@ -10,7 +12,12 @@ export default async function LeadsPage() {
       <div style={{ display: "flex", alignItems: "center" }}>
         <h1>Leads</h1>
       </div>
-      <DatabaseTable table={table} databaseId={env.dbLeads} createHref="/leads/new" />
+      <CompactList
+        table={table}
+        createHref="/leads/new"
+        titleLinkBasePath="/leads"
+        rowEditHrefBasePath="/leads"
+      />
     </div>
   );
 }

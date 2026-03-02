@@ -1,6 +1,8 @@
-import DatabaseTable from "@/components/DatabaseTable";
+import CompactList from "@/components/CompactList";
 import { env } from "@/lib/env";
 import { getDatabaseTable } from "@/lib/notion";
+
+export const dynamic = "force-dynamic";
 
 export default async function InvoicesPage() {
   if (!env.dbInvoices) {
@@ -23,7 +25,12 @@ export default async function InvoicesPage() {
           {table.title && <div className="muted">{table.title}</div>}
         </div>
       </div>
-      <DatabaseTable table={table} databaseId={env.dbInvoices} />
+      <CompactList
+        table={table}
+        titleLinkBasePath="/invoices"
+        rowEditHrefBasePath="/invoices"
+        createHref="/invoices/new"
+      />
     </div>
   );
 }
